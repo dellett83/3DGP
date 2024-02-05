@@ -24,10 +24,9 @@ int main()
 	// ------------------------------------------------------------------------------------------------------------------- Triangle positions
 	const GLfloat positions[] =
 	{
-		0.5f, 0.5f, 0.0f,
-		-0.5f, 0.5f, 0.0f,
+		0.5f, -0.5f, 0.0f,
+		0.0f, 0.5f, 0.0f,
 		-0.5f, -0.5f, 0.0f,
-		0.5f, -0.5f, 0.0f
 	};
 
 	GLuint positionsVboId = 0;
@@ -48,6 +47,29 @@ int main()
 	//reset state
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
+	// ------------------------------------------------------------------------------------------------------------------- Triangle colours
+	const GLfloat colors[] = {
+		1.0f, 0.0f, 0.0f, 1.0f,
+	};
+
+	GLuint colorsVboId = 0;
+
+	//creating new vbo on the gpu
+	glGenBuffers(1, &colorsVboId);
+
+	if (!colorsVboId)
+	{
+		throw std::exception();
+	}
+
+	glBindBuffer(GL_ARRAY_BUFFER, colorsVboId);
+
+	//upload copy of data to vbo from memory
+	glBufferData(GL_ARRAY_BUFFER, sizeof(colors), colors, GL_STATIC_DRAW);
+
+	//reset state
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
 	// ------------------------------------------------------------------------------------------------------------------- creating vao
 
 	GLuint vaoId = 0;
@@ -64,10 +86,14 @@ int main()
 
 	//bind vbo pos, assign pos 0 on bound vao, flag it to be used
 	glBindBuffer(GL_ARRAY_BUFFER, positionsVboId);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (void*)0);
 
-	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (void*)0);
+	//bind vbo pos, assign pos 1 on bound vao, flag it to be used
+	glBindBuffer(GL_ARRAY_BUFFER, colorsVboId);
+	glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, 1 * sizeof(GLfloat), (void*)0);
 
 	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
 
 	//reset state
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -76,12 +102,17 @@ int main()
 	// ------------------------------------------------------------------------------------------------------------------- writing shader program
 	
 	const GLchar* vertexShaderSrc =
-		"attribute vec3 in_Position; "\
-		" "\
-		"void main() "\
-		"{ "\
-		"gl_Position = vec4(in_Position, 1.0); "\
-		"} ";
+		"attribute vec3 a_Position;            " \
+		"attribute vec4 a_Color;               " \
+		"                                       " \
+		"varying vec4 v_Color;                 " \
+		"                                       " \
+		"void main()                            " \
+		"{                                      " \
+		" gl_Position = vec4(a_Position, 1.0); " \
+		" v_Color = a_Color;                  " \
+		"}                                      " \
+		"                                       ";
 
 	// create new vertex shader, compile, error check
 	GLuint vertexShaderId = glCreateShader(GL_VERTEX_SHADER);
@@ -98,10 +129,13 @@ int main()
 	// ------------------------------------------------------------------------------------------------------------------- writing fragment shader
 
 	const GLchar* fragmentShaderSrc =
-		"void main()" \
-		"{" \
-		" gl_FragColor = vec4(0, 0, 1, 1);" \
-		"}";
+		"varying vec4 v_Color;    " \
+		"                          " \
+		"void main()               " \
+		"{                         " \
+		" gl_FragColor = v_Color; " \
+		"}                         " \
+		"                          ";
 
 	//create frag shader, compile, error check
 
@@ -125,10 +159,13 @@ int main()
 	//ensure vao pos sets first pos
 	glBindAttribLocation(programId, 0, "in_Position");
 
-	//perform link, check fail
+	glBindAttribLocation(programId, 1, "a_Color");
+
+	//perform link
 	glLinkProgram(programId);
 	glGetProgramiv(programId, GL_LINK_STATUS, &success);
 
+	//check link fail
 	if (!success)
 	{
 		throw std::exception();
@@ -168,9 +205,6 @@ int main()
 
 		//draw 3 verts
 		glDrawArrays(GL_TRIANGLES, 0, 3);
-
-		//draw 3 verts
-		glDrawArrays(GL_TRIANGLES, 1, 4);
 
 		//reset state
 		glBindVertexArray(0);
