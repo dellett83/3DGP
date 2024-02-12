@@ -1,6 +1,8 @@
 #include <SDL2/sdl.h>
 #include <GL/glew.h>
 #include <iostream>
+#include <glm/glm.hpp>
+#include <glm/ext.hpp>
 
 #define WINDOW_WIDTH 800
 #define WINDOW_HEIGHT 600
@@ -50,6 +52,8 @@ int main()
 	// ------------------------------------------------------------------------------------------------------------------- Triangle colours
 	const GLfloat colors[] = {
 		1.0f, 0.0f, 0.0f, 1.0f,
+		0.0f, 1.0f, 0.0f, 1.0f,
+		0.0f, 0.0f, 1.0f, 1.0f,
 	};
 
 	GLuint colorsVboId = 0;
@@ -104,12 +108,13 @@ int main()
 	const GLchar* vertexShaderSrc =
 		"attribute vec3 a_Position;            " \
 		"attribute vec4 a_Color;               " \
-		"                                       " \
+		"uniform mat4 u_Projection;				" \
+		"uniform mat4 u_Model;					" \
 		"varying vec4 v_Color;                 " \
 		"                                       " \
 		"void main()                            " \
 		"{                                      " \
-		" gl_Position = vec4(a_Position, 1.0); " \
+		" gl_Position = u_Projection * u_Model * vec4(a_Position, 1.0); " \
 		" v_Color = a_Color;                  " \
 		"}                                      " \
 		"                                       ";
@@ -125,6 +130,7 @@ int main()
 	{
 		throw std::exception();
 	}
+
 
 	// ------------------------------------------------------------------------------------------------------------------- writing fragment shader
 
@@ -171,6 +177,10 @@ int main()
 		throw std::exception();
 	}
 
+	//find uniform locations
+	GLint modelLoc = glGetUniformLocation(programId, "u_Model");
+	GLint projectionLoc = glGetUniformLocation(programId, "u_Projection");
+
 	//detach and destroy, shader was compiled
 	glDetachShader(programId, vertexShaderId);
 	glDeleteShader(vertexShaderId);
@@ -178,6 +188,10 @@ int main()
 	glDeleteShader(fragmentShaderId);
 
 	// ------------------------------------------------------------------------------------------------------------------- 
+
+	float angle = 0.0f;
+	int width = 0;
+	int height = 0;
 
 	bool quit = false;
 	while (!quit)
@@ -190,29 +204,78 @@ int main()
 			{
 				quit = true;
 			}
+			switch (event.type)
+			{
+			case SDL_KEYDOWN:
+				switch (event.key.keysym.sym)
+				{
+				case SDLK_LEFT:  (angle -= 1.0f); break;
+				case SDLK_RIGHT: (angle += 1.0f) ; break;
+				}
+				break;
+			}
 		}
 
-		
+
+
+		SDL_GetWindowSize(window, &width, &height);
+		glViewport(0, 0, width, height);
 
 		glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
-
-		// ------------------------------------------------------------------------------------------------------------------- draw it
 
 		//tell gl to use our shader program
 		glUseProgram(programId);
 		glBindVertexArray(vaoId);
 
+		//prepare projection and model matrix
+		glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)width / (float)height, 0.1f, 100.0f);
+		glm::mat4 model(1.0f);
+		model = glm::translate(model, glm::vec3(0, 0, -2.5f));
+		model = glm::rotate(model, glm::radians(angle), glm::vec3(0, 1, 0));
+
+	
+
+		//upload model
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+
+		//upload projection
+		glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
+
 		//draw 3 verts
 		glDrawArrays(GL_TRIANGLES, 0, 3);
+
+		//Orthographic Projection
+
+		projection = glm::ortho(0.0f, (float)width, 0.0f, (float)height, 0.0f, 1.0f);
+		model = glm::mat4(1.0f);
+		model = glm::translate(model, glm::vec3(100, height - 100, 0));
+		model = glm::scale(model, glm::vec3(100, 100, 1));
+
+		//is program bound
+		//upload model
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+
+		//upload projection
+		glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
+
+		// ------------------------------------------------------------------------------------------------------------------- draw it
+
+
+		//draw 3 verts
+		glDrawArrays(GL_TRIANGLES, 0, 3);
+
 
 		//reset state
 		glBindVertexArray(0);
 		glUseProgram(0);
 
+
 		// -------------------------------------------------------------------------------------------------------------------
+
 
 		SDL_GL_SwapWindow(window);
 	}
+
 	return 0;
 }
