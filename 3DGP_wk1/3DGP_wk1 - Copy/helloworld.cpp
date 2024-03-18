@@ -29,7 +29,7 @@ int main()
 	int w = 0;
 	int h = 0;
 
-	unsigned char* data = stbi_load("banana.png", &w, &h, NULL, 4);
+	unsigned char* data = stbi_load("image.png", &w, &h, NULL, 4);
 
 	if (!data)
 	{
@@ -104,7 +104,7 @@ int main()
 
 	glGenerateMipmap(GL_TEXTURE_2D);
 
-	//glBindTexture(GL_TEXTURE_2D, 0);
+	glBindTexture(GL_TEXTURE_2D, 0);
 
 	// ------------------------------------------------------------------------------------------------------------------- creating vao
 
@@ -169,9 +169,9 @@ int main()
 	// ------------------------------------------------------------------------------------------------------------------- writing fragment shader
 
 	const GLchar* fragmentShaderSrc =
-		"uniform sampler2d u_Texture;    " \
+		"uniform sampler2D u_Texture;    " \
 		"                          " \
-		"varying vec2 v_TextCoord; " \
+		"varying vec2 v_TexCoord; " \
 		"                          " \
 		"void main()               " \
 		"{                         " \
@@ -199,7 +199,7 @@ int main()
 	glAttachShader(programId, vertexShaderId);
 	glAttachShader(programId, fragmentShaderId);
 
-	GLint uniformId = glGetUniformLocation(textureId, "in_Texture");
+	GLint uniformId = glGetUniformLocation(textureId, "u_Texture");
 	if (uniformId == -1)
 	{
 		throw std::exception();
