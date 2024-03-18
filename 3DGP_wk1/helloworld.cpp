@@ -13,6 +13,8 @@
 
 int main()
 {
+	//Model cat("assets/models/curuthers/curuthers.obj");
+	//Texture tex("assets/models/curuthers/Whiskers_diffuse.png");
 	std::cout << "hello world" << std::endl;
 
 	SDL_Window* window = SDL_CreateWindow("Triangle", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL);
