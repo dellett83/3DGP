@@ -6,6 +6,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 #include "Model.h"
+#include "Texture.h"
 
 #define WINDOW_WIDTH 800
 #define WINDOW_HEIGHT 600
@@ -15,7 +16,7 @@
 int main()
 {
 	Model cat("assets/models/curuthers/curuthers.obj");
-	//Texture tex("assets/models/curuthers/Whiskers_diffuse.png");
+	Texture tex("assets/models/curuthers/Whiskers_diffuse.png");
 	std::cout << "hello world" << std::endl;
 
 	SDL_Window* window = SDL_CreateWindow("Triangle", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL);
@@ -64,51 +65,6 @@ int main()
 	//reset state
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-	// ------------------------------------------------------------------------------------------------------------------- Triangle colours
-	const GLfloat colors[] = {
-		1.0f, 0.0f, 0.0f, 1.0f,
-		0.0f, 1.0f, 0.0f, 1.0f,
-		0.0f, 0.0f, 1.0f, 1.0f,
-	};
-
-	GLuint colorsVboId = 0;
-
-	//creating new vbo on the gpu
-	glGenBuffers(1, &colorsVboId);
-
-	if (!colorsVboId)
-	{
-		throw std::exception();
-	}
-
-	glBindBuffer(GL_ARRAY_BUFFER, colorsVboId);
-
-	//upload copy of data to vbo from memory
-	glBufferData(GL_ARRAY_BUFFER, sizeof(colors), colors, GL_STATIC_DRAW);
-
-	//reset state
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-	// ------------------------------------------------------------------------------------------------------------------- Picture loading
-
-	GLuint textureId = 0;
-	glGenTextures(1, &textureId);
-
-	if (!textureId)
-	{
-		throw std::exception();
-	}
-
-	glBindTexture(GL_TEXTURE_2D, textureId);
-
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-
-	free(data);
-
-	glGenerateMipmap(GL_TEXTURE_2D);
-
-	glBindTexture(GL_TEXTURE_2D, 0);
-
 	// ------------------------------------------------------------------------------------------------------------------- creating vao
 
 	GLuint vaoId = 0;
@@ -127,12 +83,7 @@ int main()
 	glBindBuffer(GL_ARRAY_BUFFER, positionsVboId);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (void*)0);
 
-	//bind vbo pos, assign pos 1 on bound vao, flag it to be used
-	glBindBuffer(GL_ARRAY_BUFFER, colorsVboId);
-	glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, 1 * sizeof(GLfloat), (void*)0);
-
 	glEnableVertexAttribArray(0);
-	glEnableVertexAttribArray(1);
 
 	//reset state
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -142,16 +93,17 @@ int main()
 	
 	const GLchar* vertexShaderSrc =
 		"uniform mat4 u_Projection;				" \
+		"uniform mat4 u_View;					" \
 		"uniform mat4 u_Model;					" \
 		"                                       " \
-		"attribute vec3 a_Position;" \
-		"attribute vec2 a_TexCoord;" \
+		"attribute vec3 a_Position;				" \
+		"attribute vec2 a_TexCoord;				" \
 		"                                       " \
-		"varying vec2 v_TexCoord;" \
+		"varying vec2 v_TexCoord;				" \
 		"                                       " \
 		"void main()                            " \
 		"{                                      " \
-		" gl_Position = u_Projection * u_Model * vec4(a_Position, 1.0); " \
+		" gl_Position = u_Projection * u_View * u_Model * vec4(a_Position, 1.0); " \
 		" v_TexCoord = a_TexCoord;                  " \
 		"}                                      " \
 		"                                       ";
@@ -222,6 +174,7 @@ int main()
 
 	//find uniform locations
 	GLint modelLoc = glGetUniformLocation(programId, "u_Model");
+	GLint viewLoc = glGetUniformLocation(programId, "u_View");
 	GLint projectionLoc = glGetUniformLocation(programId, "u_Projection");
 
 	//detach and destroy, shader was compiled
@@ -235,6 +188,8 @@ int main()
 	float angle = 0.0f;
 	int width = 0;
 	int height = 0;
+	glm::vec3 campos(0, 0, 0);
+	glm::vec3 camrot(0, 0, 0);
 
 	bool quit = false;
 	while (!quit)
@@ -252,8 +207,10 @@ int main()
 			case SDL_KEYDOWN:
 				switch (event.key.keysym.sym)
 				{
-				case SDLK_LEFT:  (angle -= 1.0f); break;
-				case SDLK_RIGHT: (angle += 1.0f) ; break;
+				case SDLK_UP:  (campos.z -= 0.5); break;
+				case SDLK_DOWN: (campos.z += 0.5); break;
+				case SDLK_LEFT: (camrot.y += 0.5); break;
+				case SDLK_RIGHT: (camrot.y -= 0.5); break;
 				}
 				break;
 			}
@@ -275,11 +232,8 @@ int main()
 
 		//tell gl to use our shader program
 
-		glBindTexture(GL_TEXTURE_2D, textureId);
+		glBindTexture(GL_TEXTURE_2D, tex.TextureId());
 		glUseProgram(programId);
-		glUseProgram(textureId);
-		glUniform1i(uniformId, 1);
-		glUseProgram(0);
 		glBindVertexArray(cat.vao_id());
 
 		glEnable(GL_DEPTH_TEST);
@@ -289,13 +243,21 @@ int main()
 		//prepare projection and model matrix
 		glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)width / (float)height, 0.1f, 100.0f);
 		glm::mat4 model(1.0f);
-		model = glm::translate(model, glm::vec3(0, 0, -2.5f));
+		model = glm::translate(model, glm::vec3(0, 0, -12.5f));
 		model = glm::rotate(model, glm::radians(angle), glm::vec3(0, 1, 0));
+		angle += 1;
 
-	
+		//prepare view matrix
+		glm::mat4 view(1.0f);
+		view = glm::translate(view, campos);
+		view = glm::rotate(view, glm::radians(camrot.y), glm::vec3(0, 1, 0));
+		view = glm::inverse(view);
 
 		//upload model
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+
+		//upload view
+		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 
 		//upload projection
 		glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
