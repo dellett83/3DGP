@@ -6,6 +6,7 @@
 
 #include <string>
 #include <fstream>
+#include <vector>
 
 struct Model
 {
