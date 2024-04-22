@@ -1,16 +1,28 @@
 #include <GL/glew.h>
+#include <glm/glm.hpp>
+#include <glm/ext.hpp>
 #include <string>
 #include <fstream>
 #include <vector>
 #include <iostream>
+#include <stdexcept>
+
+struct Mesh;
 
 struct Shader
 {
+	Shader();
+
+	GLuint id();
+	void bind();
+	void unbind();
+
 	Shader(const std::string& _vertexshaderpath);
 	Shader(const std::string& _fragmentshaderpath);
 	~Shader();
 
-	GLuint id();
+	void uniform(const std::string& _name, const glm::mat4& _value);
+	void draw(const Mesh& _mesh);
 
 private:
 	GLuint m_id;
@@ -19,11 +31,15 @@ private:
 
 	std::string m_vertexsrc;
 	std::string m_fragmentsrc;
+	bool m_dirty;
 };
 
-#include <stdexcept>
 inline Shader::Shader(const std::string& _vertexshaderpath)
-: m_vertexsrc("")
+	: m_id(0)
+	, f_id(0)
+	, v_id(0)
+	, m_vertexsrc("")
+	, m_dirty(false)
 {
 	
 	std::string vcurrentline;
@@ -44,7 +60,11 @@ inline Shader::Shader(const std::string& _vertexshaderpath)
 
 
 inline Shader::Shader(const std::string& _fragmentshader)
-	: m_fragmentsrc("")
+	: m_id(0)
+	, f_id(0)
+	, v_id(0)
+	, m_fragmentsrc("")
+	, m_dirty(false)
 {
 
 	std::string vcurrentline;
@@ -59,6 +79,6 @@ inline Shader::Shader(const std::string& _fragmentshader)
 	{
 		std::getline(file, vcurrentline);
 		if (vcurrentline.length() < 1) continue;
-		m_vertexsrc += vcurrentline;
+		m_fragmentsrc += vcurrentline;
 	}
 }

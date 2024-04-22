@@ -3,11 +3,11 @@
 #include <iostream>
 #include <glm/glm.hpp>
 #include <glm/ext.hpp>
-#define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 #include "Model.h"
 #include "Texture.h"
 #include "Shader.h"
+#define STB_IMAGE_IMPLEMENTATION
 
 #define WINDOW_WIDTH 800
 #define WINDOW_HEIGHT 600
@@ -18,7 +18,7 @@ int main()
 {
 	Model cat("assets/models/curuthers/curuthers.obj");
 	Texture tex("assets/models/curuthers/Whiskers_diffuse.png");
-	Shader shader("vertexshader.txt", "fragmentshader.txt");
+	//Shader shader("assets/shaders/vertexshader.txt", "assets/shaders/fragmentshader.txt");
 	std::cout << "hello world" << std::endl;
 
 	SDL_Window* window = SDL_CreateWindow("Triangle", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL);
@@ -34,7 +34,11 @@ int main()
 
 	// ------------------------------------------------------------------------------------------------------------------- 
 
-	Shader vertexShader()
+	Shader basic;
+	glUseProgram(basic.id());
+	basic.bind();
+	//draw
+	basic.unbind();
 
 	float angle = 0.0f;
 	int width = 0;
@@ -67,7 +71,7 @@ int main()
 			}
 		}
 
-		GLint uniformId = glGetUniformLocation(programId, "u_Texture");
+		GLint uniformId = glGetUniformLocation(basic.id(), "u_Texture");
 		if (uniformId == -1)
 		{
 			throw std::exception();
@@ -81,10 +85,13 @@ int main()
 		glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+		basic.uniform(...);
+		basic.draw(mesh);
+
 		//tell gl to use our shader program
 
 		glBindTexture(GL_TEXTURE_2D, tex.TextureId());
-		glUseProgram(programId);
+		glUseProgram(basic.id());
 		glBindVertexArray(cat.vao_id());
 
 		glEnable(GL_DEPTH_TEST);
@@ -98,6 +105,10 @@ int main()
 		model = glm::rotate(model, glm::radians(angle), glm::vec3(0, 1, 0));
 		angle += 1;
 
+
+		//uniform matrix model
+		basic.uniform("u_Model", model);
+
 		//prepare view matrix
 		glm::mat4 view(1.0f);
 		view = glm::translate(view, campos);
@@ -106,6 +117,7 @@ int main()
 
 		//upload model
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+
 
 		//upload view
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
