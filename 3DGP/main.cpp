@@ -15,8 +15,8 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "contrib/include/stb_image.h"
 
-#define WINDOW_WIDTH 800
-#define WINDOW_HEIGHT 600
+#define WINDOW_WIDTH 1920
+#define WINDOW_HEIGHT 1080
 
 #undef main
 
@@ -61,82 +61,13 @@ int main()
 	{
 		throw std::exception();
 	}
-//#----------------------------------------------------------------------------------------------------------------
-//	GLuint positionsVboId = 0;
-//
-//	// Create a new VBO on the GPU and bind it
-//	glGenBuffers(1, &positionsVboId);
-//
-//	if (!positionsVboId)
-//	{
-//		throw std::exception();
-//	}
-//
-//	glBindBuffer(GL_ARRAY_BUFFER, positionsVboId);
-//
-//	// Upload a copy of the data from memory into the new VBO
-//	glBufferData(GL_ARRAY_BUFFER, sizeof(positions), positions, GL_STATIC_DRAW);
-//
-//	// Reset the state
-//	glBindBuffer(GL_ARRAY_BUFFER, 0);
-//
-////#----------------------------------------------------------------------------------------------------------------
-//	GLuint colorsVboId = 0;
-//	 
-//	//Create a Colours VBO on the gpu and bind it 
-//	glGenBuffers(1, &colorsVboId);
-//
-//	if (!colorsVboId)
-//	{
-//		throw std::exception();
-//	}
-//
-//	glBindBuffer(GL_ARRAY_BUFFER, colorsVboId);
-//
-//	//upload a copy of the data from memory intp the new VBO
-//	glBufferData(GL_ARRAY_BUFFER, sizeof(colors), colors, GL_STATIC_DRAW);
-//
-//	glBindBuffer(GL_ARRAY_BUFFER, 0);
-//
-//
-////#----------------------------------------------------------------------------------------------------------------
-//	GLuint vaoId = 0;
-//
-//	// Create a new VAO on the GPU and bind it
-//	glGenVertexArrays(1, &vaoId);
-//
-//	if (!vaoId)
-//	{
-//		throw std::exception();
-//	}
-//
-//	glBindVertexArray(vaoId);
-//
-//	// Bind the position VBO, assign it to position 0 on the bound VAO
-//	// and flag it to be used
-//	glBindBuffer(GL_ARRAY_BUFFER, positionsVboId);
-//
-//
-//	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE,
-//		3 * sizeof(GLfloat), (void*)0);
-//
-//	glEnableVertexAttribArray(0);
-//
-//	// Bind the color VBO, assign it to position 1 on the bound VAO
-//   // and flag it to be used
-//	glBindBuffer(GL_ARRAY_BUFFER, colorsVboId);
-//
-//	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (void*)0);
-//
-//	glEnableVertexAttribArray(1);
-//
-//	// Reset the state
-//	glBindBuffer(GL_ARRAY_BUFFER, 0);
-//	glBindVertexArray(0);
 //#----------------------------------------------------------------------------
 	Model Cat("assets/models/curuthers/curuthers.obj");
 	Texture tex("assets/models/curuthers/Whiskers_diffuse.png");
 	Shader Shader("assets/files/fragShader.txt", "assets/files/vertShader.txt");
+	RenderTexture rentex(256, 256);
+
+
 
 	
 
@@ -159,7 +90,8 @@ int main()
 	while (!quit)
 	{
 		SDL_Event event = {};
-
+		width = 0;
+		height = 0;
 
 		while (SDL_PollEvent(&event))
 		{
@@ -195,7 +127,7 @@ int main()
 
 		//Prepare the perspective projection matrix
 		glm::mat4 projection = glm::perspective(glm::radians(45.0f),
-			(float)width / (float)height, 0.1f, 100.0f);
+			(float)width / (float)height, 0.1f, 200.0f);
 
 		//Prepare the model matrix
 		glm::mat4 model(1.0f);
@@ -224,12 +156,15 @@ int main()
 		Shader.uniform("u_Projection", projection);
 		Shader.uniform("u_View", view);
 
+		Shader.draw(Cat, tex, rentex);
+
 		Shader.draw(Cat, tex);
 		glDisable(GL_CULL_FACE);
 
+		
+
 		// Prepare the orthographic projection matrix (reusing the variable)
-		projection = glm::ortho(0.0f, (float)width, 0.0f,
-			(float)WINDOW_HEIGHT, 0.0f, 1.0f);
+		projection = glm::ortho(0.0f, (float)width, 0.0f, (float)height, 0.0f, 1.0f);
 
 		// Prepare model matrix. The scale is important because now our triangle
 		// would be the size of a single pixel when mapped to an orthographic
@@ -240,10 +175,11 @@ int main()
 
 		Shader.uniform("u_Model", model);
 		Shader.uniform("u_Projection", projection);
+		Shader.uniform("u_View", glm::mat4(1.0f));
 
 		glUseProgram(Shader.id());
 		//draw part 2
-		glDrawArrays(GL_TRIANGLES, 0, Cat.vertex_count());
+		Shader.draw(mesh, rentex.getTexture());
 
 		// Reset the state
 		glBindVertexArray(0);

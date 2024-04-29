@@ -13,13 +13,16 @@ private:
 	GLuint m_rboId;
 	int m_width;
 	int m_height;
+
+public:
 	RenderTexture(int _width, int _height);
 	~RenderTexture();
 
-public:
 	void bind();
 	void unbind();
 	GLuint getTexture();
+	int getWidth();
+	int getHeight();
 
 };
 

@@ -9,6 +9,11 @@ RenderTexture::RenderTexture(int _width, int _height)
 	m_height = _height;
 }
 
+RenderTexture::~RenderTexture()
+{
+
+}
+
 void RenderTexture::bind()
 {
 	glGenFramebuffers(1, &m_fboId);
@@ -42,4 +47,15 @@ GLuint RenderTexture::getTexture()
 		throw std::exception("Texture not loaded");
 	}
 	return m_texId;
+}
+
+int RenderTexture::getHeight()
+{
+	return m_height;
+}
+
+
+int RenderTexture::getWidth()
+{
+	return m_width;
 }

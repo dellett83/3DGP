@@ -8,6 +8,7 @@
 struct Mesh;
 struct Texture;
 struct Model;
+struct RenderTexture;
 
 struct Shader
 {
@@ -28,4 +29,9 @@ public:
     void draw(Mesh& _mesh, GLuint _texId);
     void draw(Model& _model, Texture& _tex);
     void draw(Model& _model, GLuint _texid);
+
+    void draw(Mesh& _mesh, Texture& _tex, RenderTexture& _rentex);
+    void draw(Mesh& _mesh, GLuint _texId, RenderTexture& _rentex);
+    void draw(Model& _model, Texture& _tex, RenderTexture& _rentex);
+    void draw(Model& _model, GLuint _texid, RenderTexture& _rentex);
 };

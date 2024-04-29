@@ -1,6 +1,7 @@
 #include "Shader.h"
 #include "Mesh.h"
 #include "Texture.h"
+#include "RenderTexture.h"
 #include "Model.h"
 
 #include <exception>
@@ -152,4 +153,79 @@ void Shader::draw(Model& _model, GLuint _texid)
 	glEnable(GL_DEPTH_TEST);
 	glDrawArrays(GL_TRIANGLES, 0, _model.vertex_count());
 	glUseProgram(0);
+}
+
+void Shader::draw(Mesh& _mesh, Texture& _tex, RenderTexture& _rentex)
+{
+	_rentex.bind();
+	int viewport[4];
+	glGetIntegerv(GL_VIEWPORT, viewport);
+
+	glViewport(0, 0, _rentex.getWidth(), _rentex.getHeight());
+
+	glUseProgram(m_id);
+	glBindVertexArray(_mesh.vao_id());
+	glBindTexture(GL_TEXTURE_2D, _tex.getId());
+	glDrawArrays(GL_TRIANGLES, 0, _mesh.vertex_count());
+	glUseProgram(0);
+
+	_rentex.unbind();
+	glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
+}
+
+void Shader::draw(Mesh& _mesh, GLuint _texId, RenderTexture& _rentex)
+{
+	_rentex.bind();
+	int viewport[4];
+	glGetIntegerv(GL_VIEWPORT, viewport);
+
+	glViewport(0, 0, _rentex.getWidth(), _rentex.getHeight());
+
+	glUseProgram(m_id);
+	glBindVertexArray(_mesh.vao_id());
+	glBindTexture(GL_TEXTURE_2D, _texId);
+	glEnable(GL_DEPTH_TEST);
+	glDrawArrays(GL_TRIANGLES, 0, _mesh.vertex_count());
+	glUseProgram(0);
+
+	_rentex.unbind();
+	glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
+}
+
+void Shader::draw(Model& _model, Texture& _tex, RenderTexture& _rentex)
+{
+	_rentex.bind();
+	int viewport[4];
+	glGetIntegerv(GL_VIEWPORT, viewport);
+
+	glViewport(0, 0, _rentex.getWidth(), _rentex.getHeight());
+
+	glUseProgram(m_id);
+	glBindVertexArray(_model.vao_id());
+	glBindTexture(GL_TEXTURE_2D, _tex.getId());
+	glEnable(GL_DEPTH_TEST);
+	glDrawArrays(GL_TRIANGLES, 0, _model.vertex_count());
+	glUseProgram(0);
+
+	_rentex.unbind();
+	glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
+}
+
+void Shader::draw(Model& _model, GLuint _texid, RenderTexture& _rentex)
+{
+	_rentex.bind();
+	int viewport[4];
+	glGetIntegerv(GL_VIEWPORT, viewport);
+
+	glViewport(0, 0, _rentex.getWidth(), _rentex.getHeight());
+
+	glUseProgram(m_id);
+	glBindVertexArray(_model.vao_id());
+	glBindTexture(GL_TEXTURE_2D, _texid);
+	glEnable(GL_DEPTH_TEST);
+	glDrawArrays(GL_TRIANGLES, 0, _model.vertex_count());
+	glUseProgram(0);
+
+	_rentex.unbind();
+	glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
 }
