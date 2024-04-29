@@ -10,6 +10,7 @@
 #include "Mesh.h"
 #include "Model.h"
 #include "Shader.h"
+#include "RenderTexture.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "contrib/include/stb_image.h"
@@ -135,7 +136,6 @@ int main()
 //#----------------------------------------------------------------------------
 	Model Cat("assets/models/curuthers/curuthers.obj");
 	Texture tex("assets/models/curuthers/Whiskers_diffuse.png");
-
 	Shader Shader("assets/files/fragShader.txt", "assets/files/vertShader.txt");
 
 	
@@ -143,12 +143,12 @@ int main()
 
 	Mesh mesh;
 	Face face;
-	face.a.positions = glm::vec3(0.0f, 0.5f, 0.0f);
-	face.b.positions = glm::vec3(-0.5f, -0.5f, 0.0f);
-	face.c.positions = glm::vec3(0.5f, -0.5f, 0.0f);
-	face.a.texcoords = glm::vec2(0.0f, 0.0f);
-	face.b.texcoords = glm::vec2(0.0f, 1.0f);
-	face.c.texcoords = glm::vec2(1.0f, 1.0f);
+	face.a.position = glm::vec3(0.0f, 0.5f, 0.0f);
+	face.b.position = glm::vec3(-0.5f, -0.5f, 0.0f);
+	face.c.position = glm::vec3(0.5f, -0.5f, 0.0f);
+	face.a.texcoord = glm::vec2(0.0f, 0.0f);
+	face.b.texcoord = glm::vec2(0.0f, 1.0f);
+	face.c.texcoord = glm::vec2(1.0f, 1.0f);
 	mesh.addFace(face);
 
 
@@ -224,12 +224,7 @@ int main()
 		Shader.uniform("u_Projection", projection);
 		Shader.uniform("u_View", view);
 
-		glUseProgram(Shader.id());
-		glBindVertexArray(Cat.vao_id());
-		glBindTexture(GL_TEXTURE_2D, tex.getId());
-		glEnable(GL_DEPTH_TEST);
-		// Draw 3 vertices (a triangle)
-		glDrawArrays(GL_TRIANGLES, 0, Cat.vertex_count());
+		Shader.draw(Cat, tex);
 		glDisable(GL_CULL_FACE);
 
 		// Prepare the orthographic projection matrix (reusing the variable)

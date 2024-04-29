@@ -1,12 +1,13 @@
 #include <GL/glew.h>
 #include <glm/glm.hpp>
+#include <stdexcept>
 
 #include <vector>
 
 struct Vertex
 {
-	glm::vec3 positions;
-	glm::vec2 texcoords;
+	glm::vec3 position;
+	glm::vec2 texcoord;
 	glm::vec3 normal;
 };
 
@@ -21,19 +22,19 @@ struct Face
 struct Mesh
 {
 private:
-	GLuint m_VaoId;
-	GLuint m_VboIds[3];
-	bool m_Dirty;
+	GLuint m_vaoid;
+	GLuint m_vboid;
+	bool m_dirty;
 
-	std::vector<Mesh> m_Faces;
+	std::vector<Face> m_faces;
 
 public:
 
 	Mesh();
 
 	void addFace(const Face& _face);
-	GLuint Id();
-
+	GLuint vao_id();
+	GLsizei vertex_count() const;
 
 
 };

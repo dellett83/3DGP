@@ -1,5 +1,7 @@
 #include "Shader.h"
 #include "Mesh.h"
+#include "Texture.h"
+#include "Model.h"
 
 #include <exception>
 #include <fstream>
@@ -112,9 +114,42 @@ void Shader::uniform(const std::string& _name, const glm::mat4& value)
 	glUseProgram(0);
 }
 
-void Shader::draw(const Mesh& _mesh)
+void Shader::draw(Mesh& _mesh, Texture& _tex)
 {
 	glUseProgram(m_id);
-	//glDrawArrays()
+	glBindVertexArray(_mesh.vao_id());
+	glBindTexture(GL_TEXTURE_2D, _tex.getId());
+	glEnable(GL_DEPTH_TEST);
+	glDrawArrays(GL_TRIANGLES, 0, _mesh.vertex_count());
+	glUseProgram(0);
+}
+
+void Shader::draw(Mesh& _mesh, GLuint _texId)
+{
+	glUseProgram(m_id);
+	glBindVertexArray(_mesh.vao_id());
+	glBindTexture(GL_TEXTURE_2D, _texId);
+	glEnable(GL_DEPTH_TEST);
+	glDrawArrays(GL_TRIANGLES, 0, _mesh.vertex_count());
+	glUseProgram(0);
+}
+
+void Shader::draw(Model& _model, Texture& _tex)
+{
+	glUseProgram(m_id);
+	glBindVertexArray(_model.vao_id());
+	glBindTexture(GL_TEXTURE_2D, _tex.getId());
+	glEnable(GL_DEPTH_TEST);
+	glDrawArrays(GL_TRIANGLES, 0, _model.vertex_count());
+	glUseProgram(0);
+}
+
+void Shader::draw(Model& _model, GLuint _texid)
+{
+	glUseProgram(m_id);
+	glBindVertexArray(_model.vao_id());
+	glBindTexture(GL_TEXTURE_2D, _texid);
+	glEnable(GL_DEPTH_TEST);
+	glDrawArrays(GL_TRIANGLES, 0, _model.vertex_count());
 	glUseProgram(0);
 }

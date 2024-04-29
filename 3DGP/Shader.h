@@ -6,6 +6,8 @@
 #include <string>
 
 struct Mesh;
+struct Texture;
+struct Model;
 
 struct Shader
 {
@@ -22,5 +24,8 @@ public:
     Shader(const std::string& _fragpath, const std::string& _vertpath);
     GLuint id();
     void uniform(const std::string& _name, const glm::mat4& value);
-    void draw(const Mesh& mesh);
+    void draw(Mesh& _mesh, Texture& _tex);
+    void draw(Mesh& _mesh, GLuint _texId);
+    void draw(Model& _model, Texture& _tex);
+    void draw(Model& _model, GLuint _texid);
 };
