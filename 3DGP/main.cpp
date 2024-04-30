@@ -11,6 +11,7 @@
 #include "Model.h"
 #include "Shader.h"
 #include "RenderTexture.h"
+//#include "Player.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "contrib/include/stb_image.h"
@@ -47,11 +48,14 @@ int main()
 
 
 //#----------------------------------------------------------------------------------------------------------------
+
 	SDL_Window* window = SDL_CreateWindow("Triangle",
 		SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
 		WINDOW_WIDTH, WINDOW_HEIGHT,
 		SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL);
+
 //#----------------------------------------------------------------------------------------------------------------	
+
 	if (!SDL_GL_CreateContext(window))
 	{
 		throw std::exception();
@@ -61,16 +65,15 @@ int main()
 	{
 		throw std::exception();
 	}
+
 //#----------------------------------------------------------------------------
+
 	Model Cat("assets/models/curuthers/curuthers.obj");
-	Texture tex("assets/models/curuthers/Whiskers_diffuse.png");
-	Shader Shader("assets/files/fragShader.txt", "assets/files/vertShader.txt");
+	Model Grass("assets/models/grass/grass.obj");
+	Texture cattex("assets/models/curuthers/Whiskers_diffuse.png");
+	Texture grasstex("assets/models/grass/grass.png");
+	Shader shad("assets/files/fragShader.txt", "assets/files/vertShader.txt");
 	RenderTexture rentex(256, 256);
-
-
-
-	
-
 
 	Mesh mesh;
 	Face face;
@@ -86,6 +89,8 @@ int main()
 
 	glm::vec3 campos(0, 0, 0);
 	glm::vec3 camrot(0, 0, 0);
+	glm::vec3 movement(0, 0, -20.0f);
+
 
 	while (!quit)
 	{
@@ -104,18 +109,29 @@ int main()
 				switch (event.key.keysym.sym)
 				{
 				case(SDLK_DOWN):	
-					campos.z += 1;
+					movement.y -= 1;
+					std::cout << movement.y << std::endl;
 					break;
 				case(SDLK_UP):
-					campos.z -= 1;
+					movement.y += 1;
+					std::cout << movement.y << std::endl;
 					break;
 				case(SDLK_LEFT):
-					camrot.y += 1;
+					movement.x -= 1;
+					std::cout << movement.x << std::endl;
 					break;
 				case(SDLK_RIGHT):
-					camrot.y -= 1;
+					movement.x += 1;
+					std::cout << movement.x << std::endl;
 					break;
-			
+				case(SDLK_i):
+					movement.z -= 1;
+					std::cout << movement.z << std::endl;
+					break;
+				case(SDLK_o):
+					movement.z += 1;
+					std::cout << movement.z << std::endl;
+					break;
 
 				}
 					
@@ -126,12 +142,11 @@ int main()
 
 
 		//Prepare the perspective projection matrix
-		glm::mat4 projection = glm::perspective(glm::radians(45.0f),
-			(float)width / (float)height, 0.1f, 200.0f);
+		glm::mat4 projection = glm::perspective(glm::radians(45.0f),(float)width / (float)height, 0.1f, 200.0f);
 
 		//Prepare the model matrix
 		glm::mat4 model(1.0f);
-		model = glm::translate(model, glm::vec3(0, 0, -10.0f));
+		model = glm::translate(model, movement);
 		model = glm::rotate(model, glm::radians(angle), glm::vec3(0, 1, 0));
 
 		//prepare view matrix
@@ -144,24 +159,17 @@ int main()
 		angle += 1.0f;
 
 		// Make sure the current program is bound
-
-
 		glClearColor(0.0f,0.0f, 1.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
 		// Instruct OpenGL to use our shader program and our VAO
-		
+		shad.uniform("u_Model", model);
+		shad.uniform("u_Projection", projection);
+		shad.uniform("u_View", view);
 
-		Shader.uniform("u_Model", model);
-		Shader.uniform("u_Projection", projection);
-		Shader.uniform("u_View", view);
-
-		Shader.draw(Cat, tex, rentex);
-
-		Shader.draw(Cat, tex);
+		shad.draw(Cat, cattex, rentex);
+		shad.draw(Cat, cattex);
 		glDisable(GL_CULL_FACE);
-
-		
 
 		// Prepare the orthographic projection matrix (reusing the variable)
 		projection = glm::ortho(0.0f, (float)width, 0.0f, (float)height, 0.0f, 1.0f);
@@ -173,13 +181,12 @@ int main()
 		model = glm::translate(model, glm::vec3(100, height - 100, 0));
 		model = glm::scale(model, glm::vec3(100, 100, 1));
 
-		Shader.uniform("u_Model", model);
-		Shader.uniform("u_Projection", projection);
-		Shader.uniform("u_View", glm::mat4(1.0f));
+		shad.uniform("u_Model", model);
+		shad.uniform("u_Projection", projection);
+		shad.uniform("u_View", glm::mat4(1.0f));
 
-		glUseProgram(Shader.id());
-		//draw part 2
-		Shader.draw(mesh, rentex.getTexture());
+		glUseProgram(shad.id());
+		shad.draw(mesh, rentex.getTexture());
 
 		// Reset the state
 		glBindVertexArray(0);
