@@ -26,22 +26,6 @@ int main()
 {
 
 	bool quit = false;
-	const GLfloat positions[] = {
-		0.0f, 0.5f, 0.0f,
-		-0.5f, -0.5f, 0.0f,
-		0.5f, -0.5f, 0.0f,
-
-	};
-
-	const GLfloat colors[] = {
-	0.0f, 0.0f,
-	0.0f, 1.0f,
-	1.0f, 1.0f,
-	1.0f, 1.0f,
-	1.0f, 0.0f,
-	 0.0f, 0.0f
-
-	};
 
 	float angle = 0;
 	int width = 0;
@@ -71,10 +55,12 @@ int main()
 	//---------------------------------------------------------------------------------------------------------------------------------------------------------------- OBJECTS
 	//Model
 	Model cat("assets/models/curuthers/cat.obj");
-	Model Grass("assets/models/grass/grass.obj");
+	Model grass("assets/models/grass/grass.obj");
 	//Texture
 	Texture cattex("assets/models/curuthers/cat.png");
 	Texture grasstex("assets/models/grass/grass.png");
+	Texture orthotex("assets/sample.png");
+	Texture orthotex2("assets/sample2.png");
 	//Shader
 	Shader shad("assets/files/fragShader.txt", "assets/files/vertShader.txt");
 	Shader shad2("assets/files/fragShader.txt", "assets/files/vertShader.txt");
@@ -85,17 +71,27 @@ int main()
 	Mesh mesh;
 	Face face;
 	face.a.position = glm::vec3(0.0f, 0.5f, 0.0f);
-	face.b.position = glm::vec3(-0.5f, -0.5f, 0.0f);
-	face.c.position = glm::vec3(0.5f, -0.5f, 0.0f);
-	face.a.texcoord = glm::vec2(0.0f, 0.0f);
-	face.b.texcoord = glm::vec2(0.0f, 1.0f);
+	face.b.position = glm::vec3(0.0f, 0.0f, 0.0f);
+	face.c.position = glm::vec3(0.5f, 0.5f, 0.0f);
+	face.a.texcoord = glm::vec2(0.0f, 1.0f);
+	face.b.texcoord = glm::vec2(0.0f, 0.0f);
 	face.c.texcoord = glm::vec2(1.0f, 1.0f);
 	mesh.addFace(face);
+	Mesh mesh2;
+	Face face2;
+	face2.a.position = glm::vec3(0.5f, 0.0f, 0.0f);
+	face2.b.position = glm::vec3(0.0f, 0.0f, 0.0f);
+	face2.c.position = glm::vec3(0.5f, 0.5f, 0.0f);
+	face2.a.texcoord = glm::vec2(0.0f, 1.0f);
+	face2.b.texcoord = glm::vec2(0.0f, 0.0f);
+	face2.c.texcoord = glm::vec2(1.0f, 1.0f);
+	mesh2.addFace(face2);
 
 	//---------------------------------------------------------------------------------------------------------------------------------------------------------------- VARIABLES
 	glm::vec3 camrot(0, 0, 0);
 	glm::vec3 movement(0, 0, -20.0f);
 	glm::vec3 grassMovement(0, -4.0f, -20.0f);
+	angle = 0.0f;
 
 
 	while (!quit)
@@ -103,7 +99,6 @@ int main()
 		SDL_Event event = {};
 		width = 0;
 		height = 0;
-		angle = 0.0f;
 
 		while (SDL_PollEvent(&event))
 		{
@@ -117,32 +112,25 @@ int main()
 				{
 				case(SDLK_DOWN):	
 					movement.y -= 1;
-					std::cout << movement.y << std::endl;
 					break;
 				case(SDLK_UP):
 					movement.y += 1;
-					std::cout << movement.y << std::endl;
 					break;
 				case(SDLK_LEFT):
 					movement.x -= 1;
-					std::cout << movement.x << std::endl;
 					angle = 270.0f;
 					break;
 				case(SDLK_RIGHT):
 					movement.x += 1;
-					std::cout << movement.x << std::endl;
 					angle = 90.0f;
 					break;
 				case(SDLK_i):
 					movement.z -= 1;
-					std::cout << movement.z << std::endl;
 					break;
 				case(SDLK_o):
 					movement.z += 1;
-					std::cout << movement.z << std::endl;
 					break;
 				}
-					
 			}
 		}
 		SDL_GetWindowSize(window, &width, &height);
@@ -165,7 +153,6 @@ int main()
 		view = glm::rotate(view, glm::radians(camrot.y), glm::vec3(0, 1, 0));
 		view = glm::inverse(view);
 		// Increase the float angle so next frame the triangle rotates further
-		angle = 0.0f;
 
 
 
@@ -173,10 +160,9 @@ int main()
 		glm::mat4 grassModel(1.0f);
 		grassModel = glm::translate(grassModel, grassMovement);
 
-
 		//---------------------------------------------------------------------------------------------------------------------------------------------------------------- DRAWING ONTO SCREEN
 		// Make sure the current program is bound
-		glClearColor(0.0f,0.0f, 1.0f, 1.0f);
+		glClearColor(0.0f,0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
 		// Instruct OpenGL to use our shader program and our VAO for the cat
@@ -190,8 +176,9 @@ int main()
 		shad2.uniform("u_Model", grassModel);
 		shad2.uniform("u_Projection", projection);
 		shad2.uniform("u_View", view);
-		shad2.draw(Grass, grasstex, rentex);
-		shad2.draw(Grass, grasstex);
+		shad2.draw(grass, grasstex, rentex);
+		shad2.draw(grass, grasstex);
+
 
 		//--------------------------------------------------------------------------
 		glDisable(GL_CULL_FACE);
@@ -203,13 +190,14 @@ int main()
 
 		// Prepare model matrix. The scale is important because now our triangle would be the size of a single pixel when mapped to an orthographic projection.
 		model = glm::mat4(1.0f);
-		model = glm::translate(model, glm::vec3(100, height - 100, 0));
-		model = glm::scale(model, glm::vec3(100, 100, 1));
+		model = glm::translate(model, glm::vec3(100, height - 200, 0));
+		model = glm::scale(model, glm::vec3(200, 200, 1));
 		shad.uniform("u_Model", model);
 		shad.uniform("u_Projection", projection);
 		shad.uniform("u_View", glm::mat4(1.0f));
 		glUseProgram(shad.id());
-		shad.draw(mesh, rentex.getTexture());
+		shad.draw(mesh,orthotex);
+		shad.draw(mesh2, orthotex2);
 
 		//---------------------------------------------------------------------------------------------------------------------------------------------------------------- BIND VERTEX ARRAY
 		// Reset the state
